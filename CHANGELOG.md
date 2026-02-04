@@ -1,2 +1,2 @@
-# CHANGELOG V2.1.11
-* New Everblush Lavender Theme added by [@samuelTallet](https://github.com/SamuelTallet)
+# CHANGELOG V2.1.12
+* Improve URL handling in values

@@ -134,7 +134,7 @@ SOFTWARE.
   }
 
   function setupContextMenu() {
-    if(!options.contextMenus) return;
+    if (!options.contextMenus) return;
     window.addEventListener("contextmenu", function (e) {
       if (window.getComputedStyle(contextMenu).visibility === "visible") return false;
       e.preventDefault();
@@ -202,7 +202,7 @@ SOFTWARE.
         code
           .replace(/\\/g, "\\\\")
           .replace(/\\\\\"/g, "\\\\\\\"")
-          .replace(/\\\\u/g, 
+          .replace(/\\\\u/g,
             options.rawUnicodeEscapes === true ? "\\\\u" : "\\u"
           ),
         sortingFuncton)
@@ -1049,16 +1049,103 @@ SOFTWARE.
     return flag;
   }
 
+  function trimTrailing(url) {
+    let trailing = '';
+    const punct = '.,;:!?>\'"\\';
+    const entities = ['&gt;', '&lt;', '&amp;', '&quot;', '&#39;'];
+
+    while (url.length > 0) {
+      let found = false;
+      for (let entity of entities) {
+        if (url.endsWith(entity)) {
+          trailing = entity + trailing;
+          url = url.slice(0, -entity.length);
+          found = true;
+          break;
+        }
+      }
+      if (found) continue;
+
+      let last = url[url.length - 1];
+
+      if (punct.includes(last)) {
+        trailing = last + trailing;
+        url = url.slice(0, -1);
+        continue;
+      }
+
+      if (last === ')') {
+        let open = (url.match(/\(/g) || []).length;
+        let close = (url.match(/\)/g) || []).length;
+        if (close > open) {
+          trailing = last + trailing;
+          url = url.slice(0, -1);
+          continue;
+        }
+      }
+      if (last === ']') {
+        let open = (url.match(/\[/g) || []).length;
+        let close = (url.match(/\]/g) || []).length;
+        if (close > open) {
+          trailing = last + trailing;
+          url = url.slice(0, -1);
+          continue;
+        }
+      }
+      if (last === '}') {
+        let open = (url.match(/\{/g) || []).length;
+        let close = (url.match(/\}/g) || []).length;
+        if (close > open) {
+          trailing = last + trailing;
+          url = url.slice(0, -1);
+          continue;
+        }
+      }
+      break;
+    }
+
+    return [url, trailing];
+  }
+
   function linkify(inputText) {
-    //URLs starting with http://, https://, or ftp://
-    var P1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim,
-      //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
-      P2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim,
-      //Change email addresses to mailto:: links.
-      P3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim,
-      text = inputText.replace(P1, '<a class="JF_linkify-link" href="$1" target="_blank">$1</a>');
-    text = text.replace(P2, '$1<a class="JF_linkify-link" href="http://$2" target="_blank">$2</a>');
-    text = text.replace(P3, '<a class="JF_linkify-link" href="mailto:$1">$1</a>');
+    // urls with explicit protocols
+    let P1 = /\b((?:https?|ftp):\/\/[^\s<>"'\\]+)/gim;
+
+    // urls starting with www. only after a space or certain delimiters
+    let P2 = /(^|[\s"'(\[{<])(www\.[^\s<>"'\\]+)/gim;
+
+    // email addresses
+    let P3 = /\b([A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,})\b/gim;
+
+    let text = inputText;
+    // replace protocols
+    text = text.replace(P1, function (match, url) {
+      let [cleanUrl, trailing] = trimTrailing(url);
+      return '<a class="JF_linkify-link" href="' + cleanUrl + '" target="_blank">' + cleanUrl + '</a>' + trailing;
+    });
+
+    // replace www.
+    text = text.replace(P2, function (match, prefix, url) {
+      let [cleanUrl, trailing] = trimTrailing(url);
+      return prefix + '<a class="JF_linkify-link" href="http://' + cleanUrl + '" target="_blank">' + cleanUrl + '</a>' + trailing;
+    });
+
+    // replace emails
+    text = text.replace(P3, function (match, email, offset) {
+      let before = text.substring(Math.max(0, offset - 200), offset);
+      // skip inside href
+      if (before.includes('href="') && !before.includes('">')) {
+        return match;
+      }
+      // skip inside a
+      let lastTagOpen = before.lastIndexOf('<a ');
+      let lastTagClose = before.lastIndexOf('</a>');
+      if (lastTagOpen > lastTagClose) {
+        return match;
+      }
+      return '<a class="JF_linkify-link" href="mailto:' + email + '">' + email + '</a>';
+    });
+
     return text;
   }
 

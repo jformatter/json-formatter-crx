@@ -74,9 +74,10 @@ Moreover, you can customize these shortcut keys as per your convenience from the
 ### Credits
 
 * [Arnav](https://github.com/arnav-kr)
-* Extracts from [pgrabovets/json-view](https://github.com/pgrabovets/json-view)
+* Extracts from [pgrabovets/json-view](https://github.com/pgrabovets/json-view) - MIT License
 
 ### License:
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-[MIT Licence](LICENSE)
+Third-party licenses: [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES)
 

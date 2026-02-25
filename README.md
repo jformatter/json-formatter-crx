@@ -12,7 +12,7 @@
 [![GitHub](https://img.shields.io/github/license/arnav-kr/json-formatter?style=flat-square&logo=github&logoColor=white&label=GitHub&labelColor=%233d3d3d&color=%234285F4)](https://github.com/jformatter/json-formatter-crx)
 
 
-**[V2.1.14.0 CHANGELOG](CHANGELOG.md)**
+**[V2.1.15.0 CHANGELOG](CHANGELOG.md)**
 
 ## Features:
 * 60+ Themes for both Light and Dark Mode

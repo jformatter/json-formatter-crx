@@ -1,8 +1,8 @@
 {
   "name": "JSON Formatter",
   "short_name": "JSON Formatter",
-  "version": "2.1.14",
-  "version_name": "Version 2.1.14 Beta",
+  "version": "2.1.15",
+  "version_name": "Version 2.1.15 Beta",
   "manifest_version": 3,
   "description": "Formats JSON automatically! Open Source, Available with 60+ Themes, Syntax Highlighting, automatically linkifies links and more.",
   "homepage_url": "https://github.com/jformatter/json-formatter-crx",

@@ -1,8 +1,8 @@
 {
   "name": "JSON Formatter",
   "short_name": "JSON Formatter",
-  "version": "2.1.12",
-  "version_name": "Version 2.1.12 Beta",
+  "version": "2.1.13",
+  "version_name": "Version 2.1.13 Beta",
   "manifest_version": 3,
   "description": "Formats JSON automatically! Open Source, Available with 60+ Themes, Syntax Highlighting, automatically linkifies links and more.",
   "author": "Arnav",
@@ -43,41 +43,20 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "js/globals.js",
-        "js/utils.js",
-        "js/content.js"
-      ],
-      "css": [
-        "css/content.css"
-      ],
+      "matches": ["<all_urls>"],
+      "js": ["js/globals.js", "js/utils.js", "js/content.js"],
+      "css": ["css/content.css"],
       "run_at": "document_start",
       "all_frames": true,
       "match_origin_as_fallback": true
     }
   ],
-  "host_permissions": [
-    "*://*/*",
-    "<all_urls>"
-  ],
-  "permissions": [
-    "storage",
-    "unlimitedStorage"
-  ],
+  "host_permissions": ["*://*/*", "<all_urls>"],
+  "permissions": ["storage", "unlimitedStorage"],
   "web_accessible_resources": [
     {
-      "resources": [
-        "images/*",
-        "js/*",
-        "css/*",
-        "*.html"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "resources": ["images/*", "js/*", "css/*", "*.html"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

@@ -1,2 +1,2 @@
-# CHANGELOG V2.1.12
-* Improve URL handling in values
+# CHANGELOG V2.1.13
+* Support for js, css, and md files

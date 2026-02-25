@@ -427,6 +427,168 @@ body.JF_dark #JF_context_menu .JF_context_menu_item kbd {
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
+/* Code file formatting */
+.JF_code-view {
+  font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.JF_parsed > .JF_code-view {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.JF_code-gutter {
+  text-align: right;
+  padding: 8px 12px 8px 8px;
+  margin: 0;
+  user-select: none;
+  opacity: 0.4;
+  border-right: 1px solid rgba(128, 128, 128, 0.2);
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.JF_code-content {
+  padding: 8px 8px 8px 16px;
+  margin: 0;
+  flex: 1;
+  overflow-x: auto;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.JF_code-lang-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  height: 36px;
+  font-family: "Google Sans", Roboto, Arial, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #5f6368;
+  background: #f1f3f4;
+  border-radius: 4px;
+  margin-left: 8px;
+  user-select: none;
+}
+
+body.JF_dark .JF_code-lang-badge {
+  color: #9aa0a6;
+  background: #303134;
+}
+
+/* Rendered Markdown */
+.JF_md-rendered {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 24px 32px;
+  max-width: 900px;
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.JF_md-rendered h1,
+.JF_md-rendered h2,
+.JF_md-rendered h3,
+.JF_md-rendered h4,
+.JF_md-rendered h5,
+.JF_md-rendered h6 {
+  margin: 1.5em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.JF_md-rendered h1 {
+  font-size: 2em;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+  padding-bottom: 0.3em;
+}
+
+.JF_md-rendered h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+  padding-bottom: 0.3em;
+}
+
+.JF_md-rendered h3 {
+  font-size: 1.25em;
+}
+
+.JF_md-rendered p {
+  margin: 0.8em 0;
+}
+
+.JF_md-rendered code {
+  font-family: Consolas, Monaco, "Andale Mono", monospace;
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  background: rgba(128, 128, 128, 0.15);
+}
+
+.JF_md-rendered pre {
+  padding: 12px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  background: rgba(128, 128, 128, 0.1);
+  margin: 1em 0;
+}
+
+.JF_md-rendered pre code {
+  padding: 0;
+  background: none;
+  font-size: 13px;
+}
+
+.JF_md-rendered blockquote {
+  margin: 0.8em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid rgba(128, 128, 128, 0.3);
+  opacity: 0.85;
+}
+
+.JF_md-rendered ul,
+.JF_md-rendered ol {
+  padding-left: 2em;
+  margin: 0.5em 0;
+}
+
+.JF_md-rendered li {
+  margin: 0.3em 0;
+}
+
+.JF_md-rendered hr {
+  border: none;
+  border-top: 1px solid rgba(128, 128, 128, 0.3);
+  margin: 1.5em 0;
+}
+
+.JF_md-rendered a {
+  text-decoration: none;
+}
+
+.JF_md-rendered a:hover {
+  text-decoration: underline;
+}
+
+.JF_md-rendered img {
+  max-width: 100%;
+}
+
+.JF_md-rendered strong {
+  font-weight: 600;
+}
+
 /* Disable what's new popup */
 /* #JF_whats_new {
   position: fixed;

@@ -111,7 +111,7 @@ function validate(string) {
 
 const ThemeMetadata = new Map([
   [
-    "body${isDark}, .JF_json-container${isDark}", // key
+    "body${isDark}, .JF_json-container${isDark}, .JF_code-view${isDark}", // key
     {
       properties: [
         {
@@ -207,6 +207,80 @@ const ThemeMetadata = new Map([
           type: "background-color",
         }, // item
       ],  // properties
+    } // value
+  ], // entry
+
+  // Code file syntax highlighting token classes
+  [
+    ".JF_code-view${isDark} .code-keyword", // key
+    {
+      properties: [
+        {
+          name: "key",
+          type: "color",
+        }, // item
+      ], // properties
+    } // value
+  ], // entry
+
+  [
+    ".JF_code-view${isDark} .code-string", // key
+    {
+      properties: [
+        {
+          name: "stringValue",
+          type: "color",
+        }, // item
+      ], // properties
+    } // value
+  ], // entry
+
+  [
+    ".JF_code-view${isDark} .code-number", // key
+    {
+      properties: [
+        {
+          name: "numberValue",
+          type: "color",
+        }, // item
+      ], // properties
+    } // value
+  ], // entry
+
+  [
+    ".JF_code-view${isDark} .code-comment", // key
+    {
+      properties: [
+        {
+          name: "textSecondary",
+          type: "color",
+        }, // item
+      ], // properties
+    } // value
+  ], // entry
+
+  [
+    ".JF_code-view${isDark} .code-builtin", // key
+    {
+      properties: [
+        {
+          name: "booleanValue",
+          type: "color",
+        }, // item
+      ], // properties
+    } // value
+  ], // entry
+
+  // Rendered markdown link color
+  [
+    "body${isDark} .JF_md-rendered a", // key
+    {
+      properties: [
+        {
+          name: "key",
+          type: "color",
+        }, // item
+      ], // properties
     } // value
   ], // entry
 

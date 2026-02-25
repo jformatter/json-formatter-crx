@@ -508,10 +508,17 @@ SOFTWARE.
       clearTimeout(codeTimeout);
     }
     catch (e) {
-      // Not JSON
+      // Not JSON - check for code files
+      var codeFileType = detectCodeFileType();
+      if (codeFileType && preCode) {
+        clearTimeout(codeTimeout);
+        await fetchExtensionSettings();
+        await prepareCodeBody(codeFileType);
+        formatCodeFile(preCode, codeFileType);
+        globalThis.validJSON = true;
+        return;
+      }
       firstEl.hidden = false;
-      // document.body.innerHTML = '<pre style="word-wrap: break-word; white-space: pre-wrap;">' + preCode + '</pre>';
-      // document.body.classList.remove("dark", "JF_");
     }
     if (isJSON) {
       await fetchExtensionSettings();
@@ -940,6 +947,9 @@ SOFTWARE.
         document.querySelectorAll(".JF_raw") && document.querySelectorAll(".JF_raw").forEach(e => {
           e.classList.add("JF_dark");
         });
+        document.querySelectorAll(".JF_code-view") && document.querySelectorAll(".JF_code-view").forEach(e => {
+          e.classList.add("JF_dark");
+        });
         isDark = true;
         // if (!dontSave) {
         //   await chrome.storage.local.set({ [bucket]: options });
@@ -974,6 +984,9 @@ SOFTWARE.
           e.classList.add("JF_dark");
         });
         document.querySelectorAll(".JF_raw") && document.querySelectorAll(".JF_raw").forEach(e => {
+          e.classList.add("JF_dark");
+        });
+        document.querySelectorAll(".JF_code-view") && document.querySelectorAll(".JF_code-view").forEach(e => {
           e.classList.add("JF_dark");
         });
         isDark = true;
@@ -1147,6 +1160,373 @@ SOFTWARE.
     });
 
     return text;
+  }
+
+  // ===== Code File Formatting =====
+
+  function detectCodeFileType() {
+    var path = window.location.pathname.toLowerCase();
+    if (path.endsWith('.css')) return 'css';
+    if (path.endsWith('.js') || path.endsWith('.mjs') || path.endsWith('.jsx') || path.endsWith('.ts') || path.endsWith('.tsx')) return 'javascript';
+    if (path.endsWith('.md') || path.endsWith('.markdown')) return 'markdown';
+    return null;
+  }
+
+  function highlightCode(code, rules) {
+    var result = '';
+    var pos = 0;
+    var len = code.length;
+    while (pos < len) {
+      var matched = false;
+      for (var r = 0; r < rules.length; r++) {
+        rules[r].regex.lastIndex = pos;
+        var m = rules[r].regex.exec(code);
+        if (m && m.index === pos && m[0].length > 0) {
+          result += '<span class="' + rules[r].className + '">' + formatHTML(m[0]) + '</span>';
+          pos += m[0].length;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        result += formatHTML(code[pos]);
+        pos++;
+      }
+    }
+    return result;
+  }
+
+  function getCSSRules() {
+    return [
+      { regex: /\/\*[\s\S]*?\*\//y, className: 'code-comment' },
+      { regex: /"(?:[^"\\]|\\.)*"/y, className: 'code-string' },
+      { regex: /'(?:[^'\\]|\\.)*'/y, className: 'code-string' },
+      { regex: /url\([^)]*\)/y, className: 'code-string' },
+      { regex: /@[a-zA-Z][\w-]*/y, className: 'code-builtin' },
+      { regex: /!important\b/y, className: 'code-builtin' },
+      { regex: /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![\w-])/y, className: 'code-number' },
+      { regex: /::?[a-zA-Z][\w-]*/y, className: 'code-builtin' },
+      { regex: /[.][a-zA-Z][\w-]*/y, className: 'code-keyword' },
+      { regex: /[a-zA-Z][\w-]*(?=\s*:)/y, className: 'code-keyword' },
+      { regex: /-?(?:\d+\.?\d*|\.\d+)(?:px|em|rem|%|vh|vw|vmin|vmax|ch|ex|cm|mm|in|pt|pc|s|ms|deg|rad|grad|turn|fr|dpi|dpcm|dppx)?\b/y, className: 'code-number' },
+    ];
+  }
+
+  function getJSRules() {
+    return [
+      { regex: /\/\/[^\n]*/y, className: 'code-comment' },
+      { regex: /\/\*[\s\S]*?\*\//y, className: 'code-comment' },
+      { regex: /"(?:[^"\\]|\\.)*"/y, className: 'code-string' },
+      { regex: /'(?:[^'\\]|\\.)*'/y, className: 'code-string' },
+      { regex: /`(?:[^`\\]|\\.)*`/y, className: 'code-string' },
+      { regex: /\b(?:function|var|let|const|if|else|for|while|do|switch|case|break|continue|return|throw|try|catch|finally|new|delete|typeof|instanceof|void|in|of|class|extends|super|import|export|default|from|as|async|await|yield|static|get|set|type|interface|enum|implements|namespace|declare|abstract|readonly)\b/y, className: 'code-keyword' },
+      { regex: /\b(?:true|false|null|undefined|NaN|Infinity|this|globalThis|console|window|document|Math|JSON|Object|Array|String|Number|Boolean|RegExp|Date|Map|Set|WeakMap|WeakSet|Promise|Symbol|Error|TypeError|RangeError|SyntaxError|ReferenceError)\b/y, className: 'code-builtin' },
+      { regex: /\b0x[0-9a-fA-F]+\b/y, className: 'code-number' },
+      { regex: /\b0b[01]+\b/y, className: 'code-number' },
+      { regex: /\b0o[0-7]+\b/y, className: 'code-number' },
+      { regex: /\b\d+\.?\d*(?:e[+-]?\d+)?\b/y, className: 'code-number' },
+    ];
+  }
+
+  function highlightMarkdown(code) {
+    var lines = code.split('\n');
+    var inCodeBlock = false;
+    var result = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/^```/.test(line)) {
+        inCodeBlock = !inCodeBlock;
+        result.push('<span class="code-number">' + formatHTML(line) + '</span>');
+        continue;
+      }
+      if (inCodeBlock) {
+        result.push('<span class="code-number">' + formatHTML(line) + '</span>');
+        continue;
+      }
+      if (/^#{1,6}\s/.test(line)) {
+        result.push('<span class="code-keyword">' + formatHTML(line) + '</span>');
+        continue;
+      }
+      if (/^>\s/.test(line)) {
+        result.push('<span class="code-comment">' + formatHTML(line) + '</span>');
+        continue;
+      }
+      if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+        result.push('<span class="code-comment">' + formatHTML(line) + '</span>');
+        continue;
+      }
+      var highlighted = formatHTML(line);
+      highlighted = highlighted.replace(/`([^`]+)`/g, '<span class="code-number">`$1`</span>');
+      highlighted = highlighted.replace(/\*\*(.+?)\*\*/g, '<span class="code-builtin"><b>**$1**</b></span>');
+      highlighted = highlighted.replace(/__(.+?)__/g, '<span class="code-builtin"><b>__$1__</b></span>');
+      highlighted = highlighted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<span class="code-string"><i>*$1*</i></span>');
+      highlighted = highlighted.replace(/(?<!_)_([^_]+)_(?!_)/g, '<span class="code-string"><i>_$1_</i></span>');
+      highlighted = highlighted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<span class="code-builtin">[$1]($2)</span>');
+      highlighted = highlighted.replace(/^(\s*)([-*+])\s/, '$1<span class="code-keyword">$2</span> ');
+      highlighted = highlighted.replace(/^(\s*)(\d+\.)\s/, '$1<span class="code-keyword">$2</span> ');
+      result.push(highlighted);
+    }
+    return result.join('\n');
+  }
+
+  function renderMarkdown(code) {
+    var html = '';
+    var lines = code.split('\n');
+    var inCodeBlock = false;
+    var codeBlockContent = '';
+    var inList = false;
+    var listType = '';
+    var inBlockquote = false;
+    var paragraph = '';
+
+    function flushParagraph() {
+      if (paragraph.trim()) {
+        html += '<p>' + inlineMD(paragraph.trim()) + '</p>\n';
+        paragraph = '';
+      }
+    }
+    function flushList() {
+      if (inList) {
+        html += listType === 'ul' ? '</ul>\n' : '</ol>\n';
+        inList = false;
+      }
+    }
+    function flushBlockquote() {
+      if (inBlockquote) {
+        html += '</blockquote>\n';
+        inBlockquote = false;
+      }
+    }
+    function inlineMD(text) {
+      text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+      text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+      text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+      text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/__(.+?)__/g, '<strong>$1</strong>');
+      text = text.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+      text = text.replace(/(?<!_)_([^_]+)_(?!_)/g, '<em>$1</em>');
+      return text;
+    }
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/^```/.test(line)) {
+        if (inCodeBlock) {
+          html += '<pre><code>' + formatHTML(codeBlockContent) + '</code></pre>\n';
+          codeBlockContent = '';
+          inCodeBlock = false;
+        } else {
+          flushParagraph(); flushList(); flushBlockquote();
+          inCodeBlock = true;
+        }
+        continue;
+      }
+      if (inCodeBlock) {
+        codeBlockContent += (codeBlockContent ? '\n' : '') + line;
+        continue;
+      }
+      if (line.trim() === '') {
+        flushParagraph(); flushList(); flushBlockquote();
+        continue;
+      }
+      var headingMatch = line.match(/^(#{1,6})\s+(.+)/);
+      if (headingMatch) {
+        flushParagraph(); flushList(); flushBlockquote();
+        var level = headingMatch[1].length;
+        html += '<h' + level + '>' + inlineMD(formatHTML(headingMatch[2])) + '</h' + level + '>\n';
+        continue;
+      }
+      if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+        flushParagraph(); flushList(); flushBlockquote();
+        html += '<hr>\n';
+        continue;
+      }
+      if (/^>\s?/.test(line)) {
+        flushParagraph(); flushList();
+        if (!inBlockquote) { html += '<blockquote>\n'; inBlockquote = true; }
+        html += inlineMD(formatHTML(line.replace(/^>\s?/, ''))) + '<br>\n';
+        continue;
+      }
+      var ulMatch = line.match(/^(\s*)([-*+])\s+(.+)/);
+      if (ulMatch) {
+        flushParagraph(); flushBlockquote();
+        if (!inList || listType !== 'ul') { flushList(); html += '<ul>\n'; inList = true; listType = 'ul'; }
+        html += '<li>' + inlineMD(formatHTML(ulMatch[3])) + '</li>\n';
+        continue;
+      }
+      var olMatch = line.match(/^(\s*)(\d+\.)\s+(.+)/);
+      if (olMatch) {
+        flushParagraph(); flushBlockquote();
+        if (!inList || listType !== 'ol') { flushList(); html += '<ol>\n'; inList = true; listType = 'ol'; }
+        html += '<li>' + inlineMD(formatHTML(olMatch[3])) + '</li>\n';
+        continue;
+      }
+      flushBlockquote(); flushList();
+      paragraph += (paragraph ? ' ' : '') + line;
+    }
+    flushParagraph(); flushList(); flushBlockquote();
+    if (inCodeBlock) {
+      html += '<pre><code>' + formatHTML(codeBlockContent) + '</code></pre>\n';
+    }
+    return html;
+  }
+
+  async function prepareCodeBody(fileType) {
+    var langLabels = { css: 'CSS', javascript: 'JavaScript', markdown: 'Markdown' };
+    var langLabel = langLabels[fileType] || fileType;
+    document.body.innerHTML = `<svg class="defs_svg" xmlns="http://www.w3.org/2000/svg" height="0" width="0" aria-hidden="true">
+    <defs>
+      <clipPath fill-rule="evenodd" clip-rule="evenodd" id="chevron-down">
+        <path
+          d="M8.973 11.331L13.8746 6.42937L14.5721 7.12462L9.3195 12.375H8.62425L3.375 7.12462L4.07137 6.42937L8.973 11.331Z">
+        </path>
+      </clipPath>
+      <clipPath fill-rule="evenodd" clip-rule="evenodd" id="chevron-right">
+        <path
+          d="M11.331 9.027L6.42938 4.12538L7.12463 3.42788L12.375 8.6805V9.37575L7.12463 14.625L6.42938 13.9286L11.331 9.027V9.027Z">
+        </path>
+      </clipPath>
+      <path fill="rgb(30,30,30)" id="toggle_color_scheme"
+      d="M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18V6c3.31 0 6 2.69 6 6s-2.69 6-6 6z" />
+      <path id="menu_icon" d="M4 18h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zm0-5h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1z"/>
+      <path id="close_icon" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+    </defs>
+  </svg>
+  <style id="JF_theme"></style>
+  <div class="JF_actions notranslate" id="actions" translate="no">
+    <div class="JF_json_toolbar JF_invisible-toolbar JF_hidden-toolbar" id="json_toolbar">
+      <button id="toggle_dark" class="JF_toggle_dark JF_cr-button" aria-label="Toggle Dark Mode: ${keyPreview(options.hotkeys.dark)}"
+        title="Toggle Dark Mode" role="button">
+        <svg class="JF_svg-icon" viewBox="0 0 24 24" width="24px" height="24px">
+          <use xlink:href="#toggle_color_scheme"></use>
+        </svg></button>
+      <div class="JF_button-wrapper">
+        <button type="button" class="JF_cr-button ${options.tab == "parsed" ? "active" : ""}"
+          aria-label="Toggle Parsed Format" title="Toggle Parsed Format" id="open_parsed">Parsed</button>
+        <button type="button" class="JF_cr-button ${options.tab == "formatted_raw" ? "active" : ""}"
+          aria-label="Toggle Formatted Raw Format" title="Toggle Formatted Raw Format"
+          id="open_formatted_raw">Formatted Raw</button>
+        <button type="button" class="JF_cr-button ${options.tab == "raw" ? "active" : ""}"
+          aria-label="Toggle Raw Format" title="Toggle Raw Format" id="open_raw">Raw</button>
+      </div>
+      <div class="JF_code-lang-badge">${langLabel}</div>
+    </div>
+    <button type="button" class="JF_toggle_toolbar JF_cr-button" aria-label="Toggle Toolbar"
+      title="Toggle Toolbar" id="toggle_toolbar">
+      <svg class="JF_svg-icon" viewBox="0 0 24 24" width="24px" height="24px">
+        <use xlink:href="#menu_icon"></use>
+      </svg>
+    </button>
+  </div>
+  <div class="JF_parsed notranslate" id="parsed" translate="no" ${options.tab == "parsed" ? "" : "hidden"}></div>
+  <pre class="JF_raw JF_code-view JF_dark notranslate" id="formatted_raw" translate="no" ${options.tab == "formatted_raw" ? "" : "hidden"}></pre>
+  <pre class="JF_raw JF_dark notranslate" id="raw" translate="no" ${options.tab == "raw" ? "" : "hidden"}></pre>
+  <div id="JF_context_menu" class="JF_context_menu">
+    <div id="JF_context_menu_dark" class="JF_context_menu_item"><span class="JF_context_menu_item_name">Toggle Dark Mode</span><span class="JF_context_menu_item_shortcut">${keyPreview(options.hotkeys.dark)}</span></div>
+    <div id="JF_context_menu_parsed" class="JF_context_menu_item"><span class="JF_context_menu_item_name">Open Parsed View</span><span class="JF_context_menu_item_shortcut">${keyPreview(options.hotkeys.parsed)}</span></div>
+    <div id="JF_context_menu_formatted_raw" class="JF_context_menu_item"><span class="JF_context_menu_item_name">Open Formatted Raw View</span><span class="JF_context_menu_item_shortcut">${keyPreview(options.hotkeys.formatted_raw)}</span></div>
+    <div id="JF_context_menu_raw" class="JF_context_menu_item"><span class="JF_context_menu_item_name">Open Raw View</span><span class="JF_context_menu_item_shortcut">${keyPreview(options.hotkeys.raw)}</span></div>
+    <div id="JF_context_menu_toolbar" class="JF_context_menu_item"><span class="JF_context_menu_item_name">Toggle Toolbar</span><span class="JF_context_menu_item_shortcut">${keyPreview(options.hotkeys.toolbar)}</span></div>
+  </div>
+    `;
+    currentView = options.tab;
+
+    btn_parsed = document.getElementById("open_parsed");
+    btn_formatted_raw = document.getElementById("open_formatted_raw");
+    btn_raw = document.getElementById("open_raw");
+    parsedCode = document.getElementById("parsed");
+    formattedRawCode = document.getElementById("formatted_raw");
+    rawCode = document.getElementById("raw");
+    toolbar = document.getElementById("json_toolbar");
+    btn_toolbar = document.getElementById("toggle_toolbar");
+    theme_css = document.getElementById("JF_theme");
+    contextMenu = document.getElementById("JF_context_menu");
+
+    // Context menu listeners
+    document.getElementById("JF_context_menu_dark").addEventListener("click", async function () { await toggleDarkMode(); });
+    document.getElementById("JF_context_menu_parsed").addEventListener("click", function () { openView("parsed"); });
+    document.getElementById("JF_context_menu_formatted_raw").addEventListener("click", function () { openView("formatted_raw"); });
+    document.getElementById("JF_context_menu_raw").addEventListener("click", function () { openView("raw"); });
+    document.getElementById("JF_context_menu_toolbar").addEventListener("click", function () { toggleToolbar(); });
+
+    // Toolbar button listeners
+    btn_parsed.addEventListener("click", function () { openView("parsed"); });
+    btn_formatted_raw.addEventListener("click", function () { openView("formatted_raw"); });
+    btn_raw.addEventListener("click", function () { openView("raw"); });
+    btn_toolbar.addEventListener("click", function () { toggleToolbar(); });
+    document.getElementById("toggle_dark").addEventListener("click", async function () { await toggleDarkMode(); });
+
+    if (options.colorScheme == "auto") {
+      var darkbool = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      await toggleDarkMode(darkbool);
+      window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener("change", async function (e) {
+        if (options.colorScheme == "auto") {
+          await toggleDarkMode(e.matches);
+        }
+      });
+    }
+    if (options.colorScheme == "dark") await toggleDarkMode(true);
+    if (options.colorScheme == "light") await toggleDarkMode(false);
+
+    window.addEventListener("keydown", async function (e) {
+      if (e.target.tagName === "INPUT" || e.target.isContentEditable) return false;
+      var keyCombination = new Set();
+      if (e.ctrlKey) keyCombination.add("ctrl");
+      if (e.shiftKey) keyCombination.add("shift");
+      if (e.altKey) keyCombination.add("alt");
+      if (e.key === "AltGraph") keyCombination.add("alt");
+      if (e.metaKey) keyCombination.add("meta");
+      if (e.key !== "Control" && e.key !== "Shift" && e.key !== "Alt" && e.key !== "AltGraph" && e.key !== "Meta") keyCombination.add(e.key.toLowerCase());
+      var final = Array.from(keyCombination)
+        .join("+")
+        .replace(/arrow([a-z]{2,5})/g, "$1")
+        .replace(/\s/g, "space");
+      switch (final) {
+        case options.hotkeys.toolbar:
+          e.preventDefault(); toggleToolbar(); break;
+        case options.hotkeys.dark:
+          e.preventDefault(); await toggleDarkMode(); break;
+        case options.hotkeys.parsed:
+          e.preventDefault(); openView("parsed"); break;
+        case options.hotkeys.raw:
+          e.preventDefault(); openView("raw"); break;
+        case options.hotkeys.formatted_raw:
+          e.preventDefault(); openView("formatted_raw"); break;
+      }
+    });
+
+    if (options.contextMenus) setupContextMenu();
+  }
+
+  function formatCodeFile(code, fileType) {
+    var highlighted;
+    if (fileType === 'markdown') {
+      highlighted = highlightMarkdown(code);
+    } else {
+      var rules = fileType === 'css' ? getCSSRules() : getJSRules();
+      highlighted = highlightCode(code, rules);
+    }
+
+    // Parsed view
+    if (fileType === 'markdown') {
+      parsedCode.innerHTML = '<div class="JF_md-rendered">' + renderMarkdown(code) + '</div>';
+    } else {
+      var lineCount = code.split('\n').length;
+      var gutterWidth = String(lineCount).length;
+      var gutterLines = [];
+      for (var i = 1; i <= lineCount; i++) {
+        gutterLines.push(String(i).padStart(gutterWidth, ' '));
+      }
+      parsedCode.innerHTML = '<div class="JF_code-view ' + (isDark ? 'JF_dark' : '') + '">' +
+        '<pre class="JF_code-gutter">' + gutterLines.join('\n') + '</pre>' +
+        '<pre class="JF_code-content">' + highlighted + '</pre></div>';
+    }
+
+    // Formatted Raw view (syntax highlighted in a pre)
+    formattedRawCode.innerHTML = highlighted;
+
+    // Raw view (plain text)
+    rawCode.textContent = code;
   }
 
   function prettyLog(str) {

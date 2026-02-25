@@ -9,7 +9,7 @@
 [![Chrome Web Store Version](https://img.shields.io/chrome-web-store/v/gpmodmeblccallcadopbcoeoejepgpnb?style=flat-square&logo=googlechrome&logoColor=%23fff&label=%20&color=%234285F4&labelColor=%233d3d3d)](https://chrome.google.com/webstore/detail/json-formatter/gpmodmeblccallcadopbcoeoejepgpnb)
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/rating/gpmodmeblccallcadopbcoeoejepgpnb?style=flat-square&logo=googlechrome&label=Webstore%20Rating&logoColor=%23fff&color=%234285F4&labelColor=%233d3d3d&link=https%3A%2F%2Fchrome.google.com%2Fwebstore%2Fdetail%2Fjson-formatter%2Fgpmodmeblccallcadopbcoeoejepgpnb)](https://chrome.google.com/webstore/detail/json-formatter/gpmodmeblccallcadopbcoeoejepgpnb)
 [![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/gpmodmeblccallcadopbcoeoejepgpnb?style=flat-square&logo=googlechrome&label=Webstore%20Users&logoColor=%23fff&color=%234285F4&labelColor=%233d3d3d&link=https%3A%2F%2Fchrome.google.com%2Fwebstore%2Fdetail%2Fjson-formatter%2Fgpmodmeblccallcadopbcoeoejepgpnb)](https://chrome.google.com/webstore/detail/json-formatter/gpmodmeblccallcadopbcoeoejepgpnb)
-[![GitHub](https://img.shields.io/github/license/arnav-kr/json-formatter?style=flat-square&logo=github&logoColor=white&label=GitHub&labelColor=%233d3d3d&color=%234285F4)](https://github.com/arnav-kr/json-formatter)
+[![GitHub](https://img.shields.io/github/license/arnav-kr/json-formatter?style=flat-square&logo=github&logoColor=white&label=GitHub&labelColor=%233d3d3d&color=%234285F4)](https://github.com/jformatter/json-formatter-crx)
 
 
 **[V2.1.13.0 CHANGELOG](CHANGELOG.md)**
@@ -50,15 +50,15 @@ Moreover, you can customize these shortcut keys as per your convenience from the
 
 ## Screenshots:
 
-![Selecting Theme](https://github.com/arnav-kr/json-formatter/blob/main/images/screenshots/selecting-theme.png?raw=true)
+![Selecting Theme](https://raw.githubusercontent.com/jformatter/json-formatter-crx/refs/heads/main/images/screenshots/selecting-theme.png)
 
-![Clickable Links](https://github.com/arnav-kr/json-formatter/blob/main/images/screenshots/clickable-links.png?raw=true)
+![Clickable Links](https://raw.githubusercontent.com/jformatter/json-formatter-crx/refs/heads/main/images/screenshots/clickable-links.png)
 
-![Themes Preview](https://github.com/arnav-kr/json-formatter/blob/main/images/screenshots/themes-preview.png?raw=true)
+![Themes Preview](https://raw.githubusercontent.com/jformatter/json-formatter-crx/refs/heads/main/images/screenshots/themes-preview.png)
 
-![Different Formatting Options](https://github.com/arnav-kr/json-formatter/blob/main/images/screenshots/different-formatting-modes.png?raw=true)
+![Different Formatting Options](https://raw.githubusercontent.com/jformatter/json-formatter-crx/refs/heads/main/images/screenshots/different-formatting-modes.png)
 
-![Light Theme](https://github.com/arnav-kr/json-formatter/blob/main/images/screenshots/light-theme.png?raw=true)
+![Light Theme](https://raw.githubusercontent.com/jformatter/json-formatter-crx/refs/heads/main/images/screenshots/light-theme.png)
 
 ## Installation
 
@@ -70,14 +70,4 @@ Moreover, you can customize these shortcut keys as per your convenience from the
 * enable "Developer mode",
 * click "Load unpacked extension",
 * select the extension folder in this repo.
-
-### Credits
-
-* [Arnav](https://github.com/arnav-kr)
-* Extracts from [pgrabovets/json-view](https://github.com/pgrabovets/json-view) - MIT License
-
-### License:
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-Third-party licenses: [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES)
 

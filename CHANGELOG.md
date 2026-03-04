@@ -1,2 +1,2 @@
-# CHANGELOG V2.1.15
-* Changes to links
+# CHANGELOG V2.1.16
+* Change version naming scheme
